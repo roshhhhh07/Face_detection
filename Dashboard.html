@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Access Control Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f6f9;color:#1a1a2e;min-height:100vh}
+.dash{max-width:1100px;margin:0 auto;padding:1.5rem}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:40px;height:40px;border-radius:10px;background:#1a56db;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-icon svg{width:20px;height:20px}
+.brand-name{font-size:17px;font-weight:600;color:#1a1a2e}
+.brand-sub{font-size:12px;color:#6b7280;margin-top:2px}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.door-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;font-size:12px;font-weight:600;border:1.5px solid}
+.door-locked{background:#eff6ff;color:#1d4ed8;border-color:#93c5fd}
+.door-unlocked{background:#fffbeb;color:#b45309;border-color:#fcd34d}
+.dot{width:7px;height:7px;border-radius:50%}
+.dot-locked{background:#1d4ed8}
+.dot-unlocked{background:#f59e0b;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.live-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;font-size:11px;font-weight:600;background:#f0fdf4;color:#166534;border:1px solid #86efac}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#16a34a;animation:blink 1.5s infinite}
+.ip-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ip-row input{font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#1a1a2e;height:32px;outline:none}
+.ip-row input:focus{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,0.1)}
+.btn{font-size:12px;padding:6px 14px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;height:32px;font-weight:500}
+.btn:hover{background:#f9fafb;border-color:#9ca3af}
+.btn-primary{background:#1a56db;color:#fff;border-color:#1a56db}
+.btn-primary:hover{background:#1e40af}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:1.5rem}
+.metric{background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e5e7eb;position:relative;overflow:hidden}
+.metric-accent{position:absolute;top:0;left:0;width:4px;height:100%;border-radius:4px 0 0 4px}
+.metric-label{font-size:11px;color:#6b7280;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:10px;font-weight:500}
+.metric-value{font-size:26px;font-weight:700;line-height:1;color:#1a1a2e}
+.metric-sub{font-size:11px;color:#9ca3af;margin-top:5px}
+.tabs-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;width:fit-content;margin-bottom:1rem;display:flex}
+.tab{padding:8px 18px;font-size:13px;cursor:pointer;color:#6b7280;background:#fff;border-right:1px solid #e5e7eb;font-weight:500;transition:all 0.15s}
+.tab:last-child{border-right:none}
+.tab.active{background:#eff6ff;color:#1d4ed8}
+.tab:hover:not(.active){background:#f9fafb;color:#374151}
+.panel{display:none}
+.panel.active{display:block}
+.section-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.section-label{font-size:12px;color:#6b7280;font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.filters{display:flex;gap:4px;flex-wrap:wrap}
+.filt{font-size:11px;padding:4px 12px;border-radius:99px;border:1px solid #e5e7eb;background:#fff;color:#6b7280;cursor:pointer;font-weight:500;transition:all 0.15s}
+.filt.active{background:#eff6ff;color:#1d4ed8;border-color:#93c5fd}
+.filt:hover:not(.active){background:#f3f4f6;color:#374151}
+.log-list{display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto;padding-right:2px}
+.log-item{display:grid;grid-template-columns:82px 88px 1fr;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;transition:border-color 0.15s,box-shadow 0.15s}
+.log-item:hover{border-color:#93c5fd;box-shadow:0 1px 4px rgba(26,86,219,0.07)}
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;text-align:center;border:1px solid}
+.b-known{background:#f0fdf4;color:#166534;border-color:#86efac}
+.b-unknown{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
+.b-unlock{background:#fffbeb;color:#92400e;border-color:#fcd34d}
+.b-lock{background:#eff6ff;color:#1e40af;border-color:#93c5fd}
+.b-motion{background:#f9fafb;color:#6b7280;border-color:#e5e7eb}
+.log-time{font-size:11px;color:#9ca3af;font-variant-numeric:tabular-nums}
+.log-desc{font-size:12px;color:#374151}
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.img-card{border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;background:#fff;transition:border-color 0.15s,box-shadow 0.15s}
+.img-card:hover{border-color:#93c5fd;box-shadow:0 2px 8px rgba(26,86,219,0.08)}
+.img-thumb{width:100%;height:110px;object-fit:cover;background:#f3f4f6;display:block}
+.img-foot{padding:8px 10px;border-top:1px solid #f3f4f6}
+.img-type{font-size:11px;font-weight:600}
+.img-type.known{color:#166534}
+.img-type.unknown{color:#991b1b}
+.img-ts{font-size:10px;color:#9ca3af;margin-top:2px}
+.empty{text-align:center;padding:2.5rem;color:#9ca3af;font-size:13px;border:1.5px dashed #e5e7eb;border-radius:12px}
+.stream-box{border-radius:12px;border:1px solid #e5e7eb;background:#f9fafb;min-height:240px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.sp-icon{width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.divider{height:1px;background:#f3f4f6;margin:1.25rem 0}
+.footer{display:flex;justify-content:space-between;align-items:center}
+.footer-txt{font-size:11px;color:#9ca3af}
+.card{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:1.25rem}
+</style>
+</head>
+<body>
+<div class="dash">
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="9" width="12" height="9" rx="2" fill="#93c5fd"/>
+        <path d="M7 9V7a3 3 0 016 0v2" stroke="#bfdbfe" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="10" cy="13.5" r="1.5" fill="#1d4ed8"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">Access Control</div>
+      <div class="brand-sub" id="lastUpdated">Connecting to server...</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+    <div class="door-pill door-locked" id="doorStatus">
+      <div class="dot dot-locked" id="doorDot"></div>
+      <span id="doorLabel">Locked</span>
+    </div>
+    <div class="ip-row">
+      <input id="espIP" value="http://192.168.1.48" placeholder="ESP32 IP" title="ESP32 IP"/>
+      <input id="pyIP" value="http://localhost:5000" placeholder="Python server" style="width:170px" title="Python Flask IP"/>
+      <button class="btn btn-primary" onclick="fetchAll()">Refresh</button>
+    </div>
+  </div>
+</div>
+
+<div class="metrics">
+  <div class="metric"><div class="metric-accent" style="background:#3b82f6"></div><div class="metric-label">Total events</div><div class="metric-value" id="mTotal">—</div><div class="metric-sub">all time</div></div>
+  <div class="metric"><div class="metric-accent" style="background:#22c55e"></div><div class="metric-label">Known faces</div><div class="metric-value" id="mKnown" style="color:#166534">—</div><div class="metric-sub">access granted</div></div>
+  <div class="metric"><div class="metric-accent" style="background:#ef4444"></div><div class="metric-label">Unknown faces</div><div class="metric-value" id="mUnknown" style="color:#991b1b">—</div><div class="metric-sub">alerts triggered</div></div>
+  <div class="metric"><div class="metric-accent" style="background:#f59e0b"></div><div class="metric-label">Today</div><div class="metric-value" id="mToday" style="color:#92400e">—</div><div class="metric-sub">events today</div></div>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tab active" onclick="switchTab('logs',this)">Activity log</div>
+  <div class="tab" onclick="switchTab('faces',this)">Face captures</div>
+  <div class="tab" onclick="switchTab('live',this)">Live stream</div>
+</div>
+
+<div class="panel active" id="panel-logs">
+  <div class="section-bar">
+    <span class="section-label">Recent events</span>
+    <div class="filters">
+      <button class="filt active" onclick="filterLogs('all',this)">All</button>
+      <button class="filt" onclick="filterLogs('known',this)">Known</button>
+      <button class="filt" onclick="filterLogs('unknown',this)">Unknown</button>
+      <button class="filt" onclick="filterLogs('lock',this)">Door</button>
+      <button class="filt" onclick="filterLogs('motion',this)">Motion</button>
+    </div>
+  </div>
+  <div class="log-list" id="logList"><div class="empty">No events yet</div></div>
+</div>
+
+<div class="panel" id="panel-faces">
+  <div class="section-bar">
+    <span class="section-label">Captured images</span>
+    <div class="filters">
+      <button class="filt active" onclick="filterFaces('all',this)">All</button>
+      <button class="filt" onclick="filterFaces('known',this)">Known</button>
+      <button class="filt" onclick="filterFaces('unknown',this)">Unknown</button>
+    </div>
+  </div>
+  <div class="img-grid" id="imgGrid"><div class="empty" style="grid-column:1/-1">No images captured yet</div></div>
+</div>
+
+<div class="panel" id="panel-live">
+  <div class="section-bar">
+    <span class="section-label">ESP32-CAM stream</span>
+    <button class="btn btn-primary" onclick="connectStream()">Connect</button>
+  </div>
+  <div class="stream-box" id="streamBox">
+    <img id="liveImg" src="" style="width:100%;display:none;border-radius:12px"/>
+    <div id="streamPh" style="text-align:center;padding:2rem">
+      <div class="sp-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="11" rx="2" stroke="#9ca3af" stroke-width="1.2"/><circle cx="10" cy="10.5" r="3" stroke="#9ca3af" stroke-width="1.2"/></svg>
+      </div>
+      <p id="streamMsg" style="font-size:13px;color:#9ca3af;margin-bottom:12px">Enter ESP32-CAM IP above and click Connect</p>
+      <button class="btn btn-primary" onclick="connectStream()">Connect stream</button>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+<div class="footer">
+  <span class="footer-txt" id="footerTs">—</span>
+  <span class="footer-txt">Auto-refresh every 15s</span>
+</div>
+
+</div>
+
+<script>
+let allLogs=[],allFaces=[],logFilter='all',faceFilter='all';
+function switchTab(n,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));el.classList.add('active');document.getElementById('panel-'+n).classList.add('active')}
+function filterLogs(t,el){document.querySelectorAll('#panel-logs .filt').forEach(b=>b.classList.remove('active'));el.classList.add('active');logFilter=t;renderLogs()}
+function filterFaces(t,el){document.querySelectorAll('#panel-faces .filt').forEach(b=>b.classList.remove('active'));el.classList.add('active');faceFilter=t;renderFaces()}
+function fmtTime(ts){return new Date(ts*1000).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+function fmtFull(ts){const d=new Date(ts*1000);return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' '+fmtTime(ts)}
+function renderLogs(){
+  const el=document.getElementById('logList');
+  let list=allLogs;
+  if(logFilter==='known') list=allLogs.filter(l=>l.type==='known');
+  else if(logFilter==='unknown') list=allLogs.filter(l=>l.type==='unknown');
+  else if(logFilter==='lock') list=allLogs.filter(l=>l.type==='lock'||l.type==='unlock');
+  else if(logFilter==='motion') list=allLogs.filter(l=>l.type==='motion');
+  if(!list.length){el.innerHTML='<div class="empty">No events for this filter</div>';return}
+  const map={known:['b-known','Known','Access granted — door unlocked'],unknown:['b-unknown','Unknown','Unrecognised face — buzzer triggered'],unlock:['b-unlock','Unlocked','Door unlocked'],lock:['b-lock','Locked','Door locked'],motion:['b-motion','Motion','Motion detected — camera triggered']};
+  el.innerHTML=[...list].reverse().map(l=>{const[cls,label,desc]=map[l.type]||['b-motion',l.type,l.type];return`<div class="log-item"><span class="badge ${cls}">${label}</span><span class="log-time">${fmtTime(l.ts)}</span><span class="log-desc">${desc}</span></div>`}).join('')
+}
+function renderFaces(){
+  const grid=document.getElementById('imgGrid');
+  let list=allFaces;
+  if(faceFilter==='known') list=allFaces.filter(f=>f.type==='known');
+  else if(faceFilter==='unknown') list=allFaces.filter(f=>f.type==='unknown');
+  if(!list.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">No images for this filter</div>';return}
+  const base=document.getElementById('pyIP').value.trim();
+  grid.innerHTML=[...list].reverse().map(f=>`<div class="img-card"><img class="img-thumb" src="${base}/image/${f.type}/${f.filename}" onerror="this.style.background='#f3f4f6'"/><div class="img-foot"><div class="img-type ${f.type}">${f.type==='known'?'Known person':'Unknown person'}</div><div class="img-ts">${fmtFull(f.ts)}</div></div></div>`).join('')
+}
+function updateMetrics(){
+  const known=allFaces.filter(f=>f.type==='known').length;
+  const unknown=allFaces.filter(f=>f.type==='unknown').length;
+  const today=new Date().toDateString();
+  const todayCt=allLogs.filter(l=>new Date(l.ts*1000).toDateString()===today).length;
+  document.getElementById('mTotal').textContent=allLogs.length;
+  document.getElementById('mKnown').textContent=known;
+  document.getElementById('mUnknown').textContent=unknown;
+  document.getElementById('mToday').textContent=todayCt;
+}
+function setDoor(locked){
+  const pill=document.getElementById('doorStatus');
+  const dot=document.getElementById('doorDot');
+  document.getElementById('doorLabel').textContent=locked?'Locked':'Unlocked';
+  pill.className='door-pill '+(locked?'door-locked':'door-unlocked');
+  dot.className='dot '+(locked?'dot-locked':'dot-unlocked');
+}
+async function fetchAll(){
+  const base=document.getElementById('pyIP').value.trim();
+  document.getElementById('lastUpdated').textContent='Fetching...';
+  try{
+    const res=await fetch(`${base}/dashboard-data`);
+    if(!res.ok) throw new Error();
+    const data=await res.json();
+    allLogs=data.logs||[];allFaces=data.faces||[];
+    updateMetrics();renderLogs();renderFaces();
+    setDoor(data.door_locked!==false);
+    const now=new Date().toLocaleTimeString('en-IN');
+    document.getElementById('lastUpdated').textContent='Updated '+now;
+    document.getElementById('footerTs').textContent='Last sync: '+now;
+  }catch(e){
+    document.getElementById('lastUpdated').textContent='Server offline — demo mode';
+    loadDemo();
+  }
+}
+function loadDemo(){
+  const n=Math.floor(Date.now()/1000);
+  allLogs=[{type:'motion',ts:n-3600},{type:'unknown',ts:n-3590},{type:'motion',ts:n-1800},{type:'known',ts:n-1790},{type:'unlock',ts:n-1789},{type:'lock',ts:n-1784},{type:'motion',ts:n-90},{type:'unknown',ts:n-80}];
+  allFaces=[{type:'unknown',filename:'unknown_demo1.jpg',ts:n-3590},{type:'known',filename:'known_demo1.jpg',ts:n-1790},{type:'unknown',filename:'unknown_demo2.jpg',ts:n-80}];
+  updateMetrics();renderLogs();renderFaces();setDoor(true);
+  document.getElementById('footerTs').textContent='Demo mode — connect server to see live data';
+}
+function connectStream(){
+  const ip=document.getElementById('espIP').value.trim();
+  const img=document.getElementById('liveImg');
+  const ph=document.getElementById('streamPh');
+  img.src=`${ip}/stream`;img.style.display='block';ph.style.display='none';
+  img.onerror=()=>{img.style.display='none';ph.style.display='block';document.getElementById('streamMsg').textContent='Stream unavailable — check ESP32-CAM IP'};
+}
+fetchAll();
+setInterval(fetchAll,15000);
+</script>
+</body>
+</html>
